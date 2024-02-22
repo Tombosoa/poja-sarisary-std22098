@@ -88,7 +88,7 @@ public class HealthBucketController {
   @PutMapping(value = "/black-and-white/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.IMAGE_JPEG_VALUE)
   public ResponseEntity<String> uploadToBucket(
           @RequestBody MultipartFile img,
-          @PathVariables String id
+          @PathVariable String id
   ) throws IOException {
     File localFile = convertMultipartFileToFile(img);
     bucketComponent.upload(localFile, HEALTH_KEY + id);
