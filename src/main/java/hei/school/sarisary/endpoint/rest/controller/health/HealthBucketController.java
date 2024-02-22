@@ -1,27 +1,24 @@
 package hei.school.sarisary.endpoint.rest.controller.health;
 
+import static hei.school.sarisary.file.FileHashAlgorithm.NONE;
 import static java.io.File.createTempFile;
 import static java.nio.file.Files.createTempDirectory;
 import static java.util.UUID.randomUUID;
-import static school.hei.sarisary.file.FileHashAlgorithm.NONE;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.*;
+import hei.school.sarisary.PojaGenerated;
+import hei.school.sarisary.file.BucketComponent;
+import hei.school.sarisary.file.FileHash;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import school.hei.sarisary.PojaGenerated;
-import school.hei.sarisary.file.BucketComponent;
-import school.hei.sarisary.file.FileHash;
-
-import javax.imageio.ImageIO;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @PojaGenerated
 @RestController
@@ -83,57 +80,5 @@ public class HealthBucketController {
 
   private URL can_presign(String fileBucketKey) {
     return bucketComponent.presign(fileBucketKey, Duration.ofMinutes(2));
-  }
-
-  @PutMapping(value = "/black-and-white/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.IMAGE_JPEG_VALUE)
-  public ResponseEntity<String> uploadToBucket(
-          @RequestBody MultipartFile img,
-          @PathVariable String id
-  ) throws IOException {
-    File localFile = convertMultipartFileToFile(img);
-    bucketComponent.upload(localFile, HEALTH_KEY + id);
-    localFile.delete();
-    return ResponseEntity.ok("Pictures uploaded");
-  }
-
-
-  @GetMapping("/black-and-white/{id}")
-  public ResponseEntity<byte[]> getPicturesBlackAndWhite(
-          @PathVariable String id
-  ){
-    byte[] originalPictureByte = bucketComponent.download(HEALTH_KEY+id).toString().getBytes();
-
-    byte[] blackAndWhitePictureByte = convertToBW(originalPictureByte);
-
-    return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(blackAndWhitePictureByte);
-  }
-
-  private File convertMultipartFileToFile(MultipartFile file) throws IOException {
-    File localFile = File.createTempFile("tmp", file.getOriginalFilename());
-    file.transferTo(localFile);
-    return localFile;
-  }
-
-  private byte[] convertToBW(byte[] originalPictureByte){
-    try {
-      ByteArrayInputStream bais = new ByteArrayInputStream(originalPictureByte);
-      BufferedImage originalImage = ImageIO.read(bais);
-
-      BufferedImage BWImage = new BufferedImage(
-              originalImage.getWidth(),
-              originalImage.getHeight(),
-              BufferedImage.TYPE_BYTE_GRAY
-      );
-      Graphics g = BWImage.getGraphics();
-      g.drawImage(originalImage, 0, 0, null);
-
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      ImageIO.write(BWImage, "jpg", baos);
-
-      return baos.toByteArray();
-    }catch (IOException e) {
-      e.printStackTrace();
-      return originalPictureByte;
-    }
   }
 }
